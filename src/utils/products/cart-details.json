@@ -1,0 +1,21 @@
+[
+    {
+      "id": 1,
+      "name": "Zip Tote Basket",
+      "href": "#",
+      "color": "White and black",
+      "price": "$140.00",
+      "imageSrc": "https://tailwindui.com/plus/img/ecommerce-images/shopping-cart-page-04-product-03.jpg",
+      "imageAlt": "Front of zip tote bag with white canvas, black canvas straps and handle, and black zipper pulls."
+    },
+    {
+      "id": 2,
+      "name": "Throwback Hip Bag",
+      "href": "#",
+      "color": "Salmon",
+      "price": "$90.00",
+      "imageSrc": "https://tailwindui.com/plus/img/ecommerce-images/shopping-cart-page-04-product-01.jpg",
+      "imageAlt": "Salmon orange fabric pouch with match zipper, gray zipper pull, and adjustable hip belt."
+    }
+  ]
+  
