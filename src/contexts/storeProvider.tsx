@@ -1,7 +1,7 @@
 // src/providers/counter-store-provider.tsx
 'use client'
 
-import { type ReactNode, createContext, useContext, useRef } from 'react'
+import { createContext, useContext, useRef, type ReactNode } from 'react'
 import { useStore } from 'zustand'
 
 import { createCommerceStore, type StoreType } from '@/contexts/stores'

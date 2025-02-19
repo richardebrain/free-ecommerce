@@ -2,7 +2,8 @@ import { Container } from '@/components/container'
 import { Footer } from '@/components/footer'
 import { GradientBackground } from '@/components/gradient'
 import { Navbar } from '@/components/navbar'
-import ProductDetails from '@/components/Store/ProductDetails'
+import ProductDetails from '@/components/clients/ProductDetails'
+import ProductDetailsServer from '@/components/Store/ProductDetailsServer'
 const ProductPage = async ({
   params,
 }: {
@@ -15,7 +16,8 @@ const ProductPage = async ({
       <Container>
         <Navbar />
       </Container>
-      <ProductDetails />
+      <ProductDetailsServer productId={productid} />
+      {/* <ProductDetails /> */}
       <Footer />
     </div>
   )

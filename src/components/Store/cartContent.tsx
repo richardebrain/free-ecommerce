@@ -1,14 +1,22 @@
 'use client'
 import { useCommerceStore } from '@/contexts/storeProvider'
+import type { Item } from '@/contexts/stores'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import { useEffect, useState } from 'react'
 
 const CartContent = () => {
-  const { cart, updateQuantity, removeFromCart } = useCommerceStore(
-    (state) => state,
-  )
-  const products = cart
+  const { cart, removeFromCart } = useCommerceStore((state) => state)
+  const products = cart?.data?.items! as Item[]
   const total =
     products.reduce((acc, product) => acc + product.amount!, 0) + 5.0 + 53.4
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true) // Mark the component as hydrated
+  }, [])
+  if (!hydrated) {
+    return <span suppressHydrationWarning></span> // Avoid hydration mismatch
+  }
   return (
     <div className="relative z-10">
       <div className="flex min-h-full items-stretch justify-center text-center sm:items-center sm:px-6 lg:px-8">
@@ -26,14 +34,14 @@ const CartContent = () => {
               role="list"
               className="divide-y divide-gray-200 px-4 sm:px-6 lg:px-8"
             >
-              {products.map((product, productIdx) => (
+              {products!.map((product, productIdx) => (
                 <li
-                  key={product.productKey}
+                  key={product.id}
                   className="flex py-8 text-sm sm:items-center"
                 >
                   <img
-                    alt={product.imageAlt}
-                    src={product.imageSrc}
+                    alt={product.name}
+                    src={product.image}
                     className="size-24 flex-none rounded-lg border border-gray-200 sm:size-32"
                   />
                   <div className="ml-4 grid flex-auto grid-cols-1 grid-rows-1 items-start gap-x-5 gap-y-3 sm:ml-6 sm:flex sm:items-center sm:gap-0">
@@ -41,15 +49,15 @@ const CartContent = () => {
                       <h3 className="font-medium text-gray-900">
                         <a href={'/product-details'}>{product.name}</a>
                       </h3>
-                      <p className="mt-1 text-gray-500">
+                      <p className="mt-1 text-gray-500 capitalize">
                         {product.attributes.color}
                       </p>
-                      <p className="mt-1 text-gray-500">
+                      <p className="mt-1 text-gray-500 uppercase">
                         {product.attributes.size}
                       </p>
                     </div>
                     <p className="row-span-2 row-end-2 font-medium text-gray-900 sm:order-1 sm:ml-6 sm:w-1/3 sm:flex-none sm:text-right">
-                      {product?.amount!.toLocaleString('en-US', {
+                      {product?.price!.toLocaleString('en-US', {
                         style: 'currency',
                         currency: 'USD',
                       })}
@@ -60,19 +68,27 @@ const CartContent = () => {
                           name={`quantity-${productIdx}`}
                           aria-label={`Quantity, ${product.name}`}
                           defaultValue={product.quantity}
-                          onChange={(e) => {
-                            updateQuantity(product.productKey!, +e.target.value)
-                          }}
+                          // onChange={(e) => {
+                          //   updateQuantity(product.productKey!, +e.target.value)
+                          // }}
                           className="col-start-1 row-start-1 appearance-none rounded-md bg-white py-1.5 pl-3 pr-8 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                         >
-                          <option value={1}>1</option>
+                          {Array.from(
+                            { length: product.quantity! + 9 },
+                            (_, i) => (
+                              <option value={i + 1} key={i}>
+                                {i + 1}
+                              </option>
+                            ),
+                          )}
+                          {/* <option value={1}>1</option>
                           <option value={2}>2</option>
                           <option value={3}>3</option>
                           <option value={4}>4</option>
                           <option value={5}>5</option>
                           <option value={6}>6</option>
                           <option value={7}>7</option>
-                          <option value={8}>8</option>
+                          <option value={8}>8</option> */}
                         </select>
                         <ChevronDownIcon
                           aria-hidden="true"
@@ -83,7 +99,7 @@ const CartContent = () => {
                       <button
                         type="button"
                         className="ml-4 font-medium text-indigo-600 hover:text-indigo-500 sm:ml-0 sm:mt-2"
-                        onClick={() => removeFromCart(product.productKey!)}
+                        onClick={() => removeFromCart(product?.id!)}
                       >
                         <span>Remove</span>
                       </button>

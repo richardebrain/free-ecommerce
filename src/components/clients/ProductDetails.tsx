@@ -1,7 +1,10 @@
 'use client'
 
 import { useCommerceStore } from '@/contexts/storeProvider'
+import { formatCurrency } from '@/utils/convert-currency'
+import { generateCartItem } from '@/utils/generate-cart-item'
 import product from '@/utils/products/product-details.json'
+import type { productTypes } from '@/utils/types'
 import { Radio, RadioGroup } from '@headlessui/react'
 import { StarIcon } from '@heroicons/react/20/solid'
 import {
@@ -9,6 +12,8 @@ import {
   GlobeAmericasIcon,
 } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { useUser } from '@/contexts/userStore'
 
 const policies = [
   {
@@ -27,24 +32,53 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function ProductDetails() {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0])
-  const [selectedSize, setSelectedSize] = useState(product.sizes[2])
-  const addProductToCart = useCommerceStore((store) => store.addToCart)
+export default function ProductDetails({
+  productDetails,
+}: {
+  productDetails: productTypes
+}) {
+  const {user } = useUser()
+  // console.log(productDetails)
+  const color = productDetails?.data?.attributes.find(
+    (attr) => attr.name.toLowerCase() === 'color',
+  )
+  const sizes = productDetails?.data?.attributes.find(
+    (attr) => attr.name.toLowerCase() === 'size',
+  )
+  // console.log(color, 'color')
+  const [selectedColor, setSelectedColor] = useState(color?.options[0]!)
+  const [selectedSize, setSelectedSize] = useState(sizes?.options[0]!)
+  const [quantity, setQuantity] = useState(1)
+  const { addToCart: addItemToCart, initializeCart } = useCommerceStore(
+    (store) => store,
+  )
+  const images = productDetails?.data?.images
+
   const addToCart = () => {
-    addProductToCart({
-      id: product.id,
-      name: product.name,
-      price: parseFloat(product.price.replaceAll('$', '')),
-      imageSrc: product.images[0].imageSrc,
-      imageAlt: product.images[0].imageAlt,
-      attributes: {
-        color: selectedColor.name,
-        size: selectedSize.name,
-      },
+    if(!user) {
+      toast.error('Please login to add to cart')
+      return
+    }
+    if (!productDetails.name) {
+      return
+    }
+    initializeCart()
+    // return
+    const formattedProduct = {
+      ...productDetails.data,
+      name: productDetails.name,
+      sk: productDetails.sk,
+    }
+    // console.log(productDetails, 'productDetails')
+    const item = generateCartItem(formattedProduct, {
+      color: selectedColor.value,
+      size: selectedSize.value,
+    })
+    addItemToCart(item, quantity)
+    toast.success('Product added to cart', {
+      toastId: 'add-to-cart',
     })
   }
-
   return (
     <div className="bg-white">
       <div className="pb-16 pt-6 sm:pb-24">
@@ -77,11 +111,11 @@ export default function ProductDetails() {
             ))}
             <li className="text-sm">
               <a
-                href={product.href}
+                href={`/product/${productDetails?.data?.slug}`}
                 aria-current="page"
                 className="font-medium text-gray-500 hover:text-gray-600"
               >
-                {product.name}
+                {productDetails?.name}
               </a>
             </li>
           </ol>
@@ -91,10 +125,10 @@ export default function ProductDetails() {
             <div className="lg:col-span-5 lg:col-start-8">
               <div className="flex justify-between">
                 <h1 className="text-xl font-medium text-gray-900">
-                  {product.name}
+                  {productDetails?.name}
                 </h1>
                 <p className="text-xl font-medium text-gray-900">
-                  {product.price}
+                  {formatCurrency(productDetails?.data?.price, 'USD')}
                 </p>
               </div>
               {/* Reviews */}
@@ -142,19 +176,33 @@ export default function ProductDetails() {
               <h2 className="sr-only">Images</h2>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-3 lg:gap-8">
-                {product.images.map((image) => (
+                {Array.isArray(images) ? (
+                  images.map((image, index) => (
+                    <img
+                      key={image.path}
+                      alt={productDetails?.name}
+                      src={image.url}
+                      className={classNames(
+                        image.url === images[0].url
+                          ? 'w-full lg:col-span-2 lg:row-span-2'
+                          : 'hidden lg:block',
+                        'rounded-lg',
+                      )}
+                    />
+                  ))
+                ) : (
                   <img
-                    key={image.id}
-                    alt={image.imageAlt}
-                    src={image.imageSrc}
+                    key={product.images[0].imageSrc}
+                    alt={productDetails?.name}
+                    src={product.images[0].imageSrc}
                     className={classNames(
-                      image.primary
+                      product.images[0].primary
                         ? 'lg:col-span-2 lg:row-span-2'
                         : 'hidden lg:block',
                       'rounded-lg',
                     )}
                   />
-                ))}
+                )}
               </div>
             </div>
 
@@ -170,20 +218,22 @@ export default function ProductDetails() {
                       onChange={setSelectedColor}
                       className="flex items-center gap-x-3"
                     >
-                      {product.colors.map((color) => (
+                      {color?.options.map((color) => (
                         <Radio
-                          key={color.name}
+                          key={color.value}
                           value={color}
-                          aria-label={color.name}
+                          aria-label={color.label}
                           className={classNames(
-                            color.selectedColor,
+                            `ring-${color?.value}-900`,
+                            //  `ring-yellow-900`,
                             'relative -m-0.5 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none data-[checked]:ring-2 data-[focus]:data-[checked]:ring data-[focus]:data-[checked]:ring-offset-1',
                           )}
                         >
                           <span
                             aria-hidden="true"
                             className={classNames(
-                              color.bgColor,
+                              `bg-${color?.value!}-500`,
+                              //  "bg-green-500",
                               'size-8 rounded-full border border-black/10',
                             )}
                           />
@@ -211,19 +261,19 @@ export default function ProductDetails() {
                       onChange={setSelectedSize}
                       className="grid grid-cols-3 gap-3 sm:grid-cols-6"
                     >
-                      {product.sizes.map((size) => (
+                      {sizes?.options.map((size) => (
                         <Radio
-                          key={size.name}
-                          value={size}
-                          disabled={!size.inStock}
+                          key={size.value}
+                          value={size!}
+                          disabled={!product.sizes[0].inStock}
                           className={classNames(
-                            size.inStock
+                            product.sizes[0].inStock
                               ? 'cursor-pointer focus:outline-none'
                               : 'cursor-not-allowed opacity-25',
                             'flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-3 text-sm font-medium uppercase text-gray-900 hover:bg-gray-50 data-[checked]:border-transparent data-[checked]:bg-indigo-600 data-[checked]:text-white data-[focus]:ring-2 data-[focus]:ring-indigo-500 data-[focus]:ring-offset-2 data-[checked]:hover:bg-indigo-700 sm:flex-1',
                           )}
                         >
-                          {size.name}
+                          {size.value}
                         </Radio>
                       ))}
                     </RadioGroup>
@@ -246,7 +296,9 @@ export default function ProductDetails() {
                 </h2>
 
                 <div
-                  dangerouslySetInnerHTML={{ __html: product.description }}
+                  dangerouslySetInnerHTML={{
+                    __html: productDetails?.data.description,
+                  }}
                   className="mt-4 space-y-4 text-sm/6 text-gray-500"
                 />
               </div>

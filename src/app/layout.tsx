@@ -1,4 +1,5 @@
 import { CommerceStoreProvider } from '@/contexts/storeProvider'
+import { UserStoreProvider } from '@/contexts/UserProvider'
 import '@/styles/tailwind.css'
 import type { Metadata } from 'next'
 
@@ -28,8 +29,10 @@ export default function RootLayout({
           href="/blog/feed.xml"
         />
       </head>
-      <body className="text-gray-950 antialiased overflow-x-hidden">
-        <CommerceStoreProvider>{children}</CommerceStoreProvider>
+      <body className="overflow-x-hidden text-gray-950 antialiased">
+        <UserStoreProvider>
+          <CommerceStoreProvider>{children}</CommerceStoreProvider>
+        </UserStoreProvider>
       </body>
     </html>
   )
